@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AeroNex — Airline Management System</title>
+  <meta name="description"
+    content="Next-generation airline management system for admins and passengers. Manage flights, book tickets, and more." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=DM+Mono:wght@400;500&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      /* ── warm aviation palette ── */
+      --bg-deep: #100e0a;
+      --bg-mid: #1a160f;
+      --bg-card: rgba(30, 24, 15, 0.80);
+      --accent1: #e8a020;
+      /* amber gold  */
+      --accent2: #c0531a;
+      /* burnt orange */
+      --accent3: #d4860a;
+      /* dark gold    */
+      --success: #4caf7d;
+      --danger: #d94f3d;
+      --warning: #e8a020;
+      --text-hi: #f5ead8;
+      /* warm cream   */
+      --text-mid: #a89070;
+      /* warm tan     */
+      --text-lo: #5a4830;
+      --border: rgba(200, 155, 60, 0.18);
+      --glow1: rgba(232, 160, 32, 0.30);
+      --glow2: rgba(192, 83, 26, 0.28);
+      --radius: 14px;
+      --radius-sm: 9px;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-hi);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── RUNWAY GRID BACKGROUND ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(200, 155, 60, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200, 155, 60, 0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+
+    /* ── ANIMATED ORBS ── */
+    .bg-orbs {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.22;
+      animation: floatOrb 20s ease-in-out infinite alternate;
+    }
+
+    .orb1 {
+      width: 640px;
+      height: 640px;
+      background: #c07010;
+      top: -220px;
+      left: -180px;
+      animation-duration: 22s;
+    }
+
+    .orb2 {
+      width: 520px;
+      height: 520px;
+      background: #8b2a0a;
+      bottom: -160px;
+      right: -120px;
+      animation-duration: 28s;
+      animation-delay: -9s;
+    }
+
+    .orb3 {
+      width: 380px;
+      height: 380px;
+      background: #e8a020;
+      top: 38%;
+      left: 52%;
+      animation-duration: 24s;
+      animation-delay: -5s;
+    }
+
+    @keyframes floatOrb {
+      from {
+        transform: translate(0, 0) scale(1);
+      }
+
+      to {
+        transform: translate(55px, 38px) scale(1.14);
+      }
+    }
+
+    /* ── LAYOUT ── */
+    #app {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── NAVBAR ── */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 40px;
+      background: rgba(16, 14, 10, 0.82);
+      backdrop-filter: blur(22px);
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .nav-logo .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      box-shadow: 0 0 16px rgba(232, 160, 32, 0.4);
+    }
+
+    .nav-logo span {
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-badge {
+      padding: 5px 15px;
+      border-radius: 999px;
+      background: rgba(232, 160, 32, 0.12);
+      border: 1px solid rgba(232, 160, 32, 0.3);
+      font-size: 0.74rem;
+      font-weight: 700;
+      color: var(--accent1);
+      letter-spacing: 0.6px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      text-align: center;
+      padding: 88px 20px 56px;
+    }
+
+    .hero-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 18px;
+      border-radius: 999px;
+      background: rgba(192, 83, 26, 0.14);
+      border: 1px solid rgba(192, 83, 26, 0.32);
+      font-size: 0.77rem;
+      font-weight: 700;
+      color: #f08050;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2.4rem, 5vw, 4rem);
+      font-weight: 900;
+      line-height: 1.1;
+      letter-spacing: -2px;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 .gradient {
+      background: linear-gradient(135deg, var(--accent1) 0%, var(--accent2) 60%, #ff6b35 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: var(--text-mid);
+      font-size: 1.08rem;
+      max-width: 520px;
+      margin: 0 auto 44px;
+      line-height: 1.75;
+    }
+
+    /* ── ROLE BUTTONS ── */
+    .role-picker {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .role-btn {
+      position: relative;
+      padding: 22px 48px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      backdrop-filter: blur(18px);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      min-width: 200px;
+      overflow: hidden;
+    }
+
+    .role-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .role-btn.admin::before {
+      background: linear-gradient(135deg, rgba(232, 160, 32, 0.18), rgba(192, 83, 26, 0.10));
+    }
+
+    .role-btn.passenger::before {
+      background: linear-gradient(135deg, rgba(192, 83, 26, 0.18), rgba(76, 175, 125, 0.08));
+    }
+
+    .role-btn:hover::before {
+      opacity: 1;
+    }
+
+    .role-btn:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(232, 160, 32, 0.25);
+      border-color: rgba(232, 160, 32, 0.4);
+    }
+
+    .role-btn .icon {
+      font-size: 2.2rem;
+    }
+
+    .role-btn .label {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--text-hi);
+    }
+
+    .role-btn .sub {
+      font-size: 0.78rem;
+      color: var(--text-mid);
+    }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      padding: 0 40px 60px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 32px;
+      text-align: center;
+      flex: 1;
+      min-width: 140px;
+      max-width: 200px;
+      transition: transform 0.3s, box-shadow 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .stat-card:hover::after {
+      opacity: 1;
+    }
+
+    .stat-card .num {
+      font-size: 2rem;
+      font-weight: 800;
+    }
+
+    .stat-card .num.blue {
+      color: var(--accent1);
+    }
+
+    .stat-card .num.purple {
+      color: var(--accent2);
+    }
+
+    .stat-card .num.cyan {
+      color: #f0a040;
+    }
+
+    .stat-card .num.green {
+      color: var(--success);
+    }
+
+    .stat-card .lbl {
+      font-size: 0.75rem;
+      color: var(--text-mid);
+      margin-top: 4px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      background: rgba(10, 8, 5, 0.85);
+      backdrop-filter: blur(12px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+      animation: fadeIn 0.22s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    .modal {
+      background: linear-gradient(145deg, rgba(28, 22, 12, 0.98), rgba(20, 16, 8, 0.98));
+      border: 1px solid rgba(200, 155, 60, 0.22);
+      border-radius: 20px;
+      width: 100%;
+      max-width: 480px;
+      padding: 36px;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(232, 160, 32, 0.08);
+      animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .modal h2 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .modal p.sub {
+      color: var(--text-mid);
+      font-size: 0.88rem;
+      margin-bottom: 28px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      background: none;
+      border: none;
+      color: var(--text-mid);
+      font-size: 1.4rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .modal-close:hover {
+      color: var(--text-hi);
+    }
+
+    /* ── FORMS ── */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-mid);
+      margin-bottom: 8px;
+      letter-spacing: 0.3px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      background: rgba(255, 240, 200, 0.04);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-hi);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      border-color: var(--accent1);
+      box-shadow: 0 0 0 3px rgba(232, 160, 32, 0.18);
+    }
+
+    .form-group select option {
+      background: #1a160f;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      transition: all 0.25s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent1), var(--accent2));
+      color: #1a0e00;
+      width: 100%;
+      justify-content: center;
+      margin-top: 6px;
+      letter-spacing: 0.3px;
+      font-weight: 800;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(232, 160, 32, 0.45);
+    }
+
+    .btn-danger {
+      background: rgba(217, 79, 61, 0.14);
+      border: 1px solid rgba(217, 79, 61, 0.32);
+      color: #f4a090;
+      padding: 8px 16px;
+      font-size: 0.82rem;
+    }
+
+    .btn-danger:hover {
+      background: rgba(217, 79, 61, 0.28);
+    }
+
+    .btn-success {
+      background: rgba(76, 175, 125, 0.14);
+      border: 1px solid rgba(76, 175, 125, 0.32);
+      color: #7ddeb0;
+      padding: 8px 16px;
+      font-size: 0.82rem;
+    }
+
+    .btn-success:hover {
+      background: rgba(76, 175, 125, 0.28);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-mid);
+      flex: 1;
+      justify-content: center;
+    }
+
+    .btn-outline:hover {
+      border-color: var(--accent1);
+      color: var(--text-hi);
+    }
+
+    /* ── PANEL PAGES ── */
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 32px 40px 24px;
+    }
+
+    .panel-header h2 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .panel-header p {
+      color: var(--text-mid);
+      font-size: 0.88rem;
+      margin-top: 4px;
+    }
+
+    .panel-header .actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      padding: 0 40px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      background: none;
+      border: none;
+      color: var(--text-mid);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-hi);
+    }
+
+    .tab-btn.active {
+      color: var(--accent1);
+      border-bottom-color: var(--accent1);
+    }
+
+    .tab-content {
+      display: none;
+      padding: 0 40px;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.25s ease;
+    }
+
+    /* ── CARDS GRID ── */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .flight-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .flight-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+    }
+
+    .flight-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(232, 160, 32, 0.2);
+      border-color: rgba(200, 155, 60, 0.35);
+    }
+
+    .flight-route {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .route-city {
+      text-align: center;
+    }
+
+    .route-city .code {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+
+    .route-city .name {
+      font-size: 0.72rem;
+      color: var(--text-mid);
+      margin-top: 2px;
+    }
+
+    .route-line {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .route-line .plane {
+      font-size: 1.2rem;
+      transform: rotate(90deg);
+    }
+
+    .route-line .line {
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border), transparent);
+    }
+
+    .flight-meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .meta-item .lbl {
+      font-size: 0.7rem;
+      color: var(--text-mid);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .meta-item .val {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .class-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 700;
+    }
+
+    .class-badge.business {
+      background: rgba(232, 160, 32, 0.15);
+      color: #f5c842;
+      border: 1px solid rgba(232, 160, 32, 0.35);
+    }
+
+    .class-badge.economy {
+      background: rgba(76, 175, 125, 0.12);
+      color: #7ddeb0;
+      border: 1px solid rgba(76, 175, 125, 0.28);
+    }
+
+    .price-tag {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--success);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    /* ── BOOKING CARD ── */
+    .booking-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      transition: all 0.3s ease;
+    }
+
+    .booking-card:hover {
+      border-color: rgba(200, 155, 60, 0.35);
+      transform: translateY(-2px);
+    }
+
+    .booking-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .booking-id {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent1);
+      letter-spacing: 1px;
+    }
+
+    .booking-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .booking-field .lbl {
+      font-size: 0.7rem;
+      color: var(--text-mid);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .booking-field .val {
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-mid);
+    }
+
+    .empty-state .icon {
+      font-size: 3.5rem;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-hi);
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      font-size: 0.88rem;
+    }
+
+    /* ── TOAST ── */
+    #toast-container {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .toast {
+      padding: 14px 22px;
+      border-radius: var(--radius-sm);
+      font-size: 0.88rem;
+      font-weight: 600;
+      min-width: 260px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideInRight 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), fadeOut 0.4s 2.4s ease forwards;
+      backdrop-filter: blur(16px);
+      border: 1px solid;
+    }
+
+    .toast.success {
+      background: rgba(76, 175, 125, 0.18);
+      border-color: rgba(76, 175, 125, 0.38);
+      color: #7ddeb0;
+    }
+
+    .toast.error {
+      background: rgba(217, 79, 61, 0.18);
+      border-color: rgba(217, 79, 61, 0.38);
+      color: #f4a090;
+    }
+
+    .toast.info {
+      background: rgba(232, 160, 32, 0.16);
+      border-color: rgba(232, 160, 32, 0.35);
+      color: #f5c842;
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(80px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeOut {
+      from {
+        opacity: 1;
+      }
+
+      to {
+        opacity: 0;
+        transform: translateX(60px);
+      }
+    }
+
+    /* ── SEARCH BAR ── */
+    .search-bar {
+      position: relative;
+      margin-bottom: 28px;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 13px 18px 13px 46px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-hi);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .search-bar input:focus {
+      border-color: var(--accent1);
+      box-shadow: 0 0 0 3px rgba(232, 160, 32, 0.18);
+    }
+
+    .search-bar .icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-mid);
+    }
+
+    /* ── ADMIN LOGIN ── */
+    .admin-login-wrap {
+      max-width: 420px;
+      margin: 80px auto;
+      padding: 0 20px;
+    }
+
+    .glass-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 40px 100px rgba(0, 0, 0, 0.4);
+    }
+
+    .glass-card h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+    }
+
+    .glass-card p.sub {
+      color: var(--text-mid);
+      font-size: 0.88rem;
+      margin-bottom: 32px;
+    }
+
+    .lock-icon {
+      width: 60px;
+      height: 60px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(232, 160, 32, 0.22), rgba(192, 83, 26, 0.22));
+      border: 1px solid rgba(232, 160, 32, 0.32);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      margin-bottom: 24px;
+      box-shadow: 0 0 24px rgba(232, 160, 32, 0.2);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-lo);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      margin-top: 60px;
+    }
+
+    footer span {
+      color: var(--text-mid);
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 99px;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 640px) {
+      nav {
+        padding: 14px 20px;
+      }
+
+      .panel-header {
+        padding: 24px 20px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+      }
+
+      .tabs {
+        padding: 0 20px;
+      }
+
+      .tab-content {
+        padding: 0 20px;
+      }
+
+      .stats-row {
+        padding: 0 20px 40px;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="bg-orbs">
+    <div class="orb orb1"></div>
+    <div class="orb orb2"></div>
+    <div class="orb orb3"></div>
+  </div>
+
+  <div id="app">
+    <!-- NAVBAR -->
+    <nav>
+      <div class="nav-logo" onclick="goHome()" style="cursor:pointer">
+        <div class="logo-icon">✈</div>
+        <span>AeroNex</span>
+      </div>
+      <div class="nav-badge" id="nav-badge">Airline Management v2.0</div>
+    </nav>
+
+    <!-- PAGE: HOME -->
+    <div id="page-home" class="page active">
+      <div class="hero">
+        <div class="hero-tag">✦ Next-Gen Airline Platform</div>
+        <h1>Fly smarter.<br /><span class="gradient">Manage better.</span></h1>
+        <p>A complete airline management solution built for the modern era — real-time flight control, seamless
+          bookings, and premium passenger experience.</p>
+        <div class="role-picker">
+          <button class="role-btn admin" onclick="showAdminLogin()">
+            <div class="icon">🛡️</div>
+            <div class="label">Admin Panel</div>
+            <div class="sub">Manage flights & operations</div>
+          </button>
+          <button class="role-btn passenger" onclick="showPage('page-passenger')">
+            <div class="icon">🧳</div>
+            <div class="label">Passenger Portal</div>
+            <div class="sub">Browse, book & manage tickets</div>
+          </button>
+        </div>
+      </div>
+
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card">
+          <div class="num blue" id="stat-flights">0</div>
+          <div class="lbl">Available Flights</div>
+        </div>
+        <div class="stat-card">
+          <div class="num purple" id="stat-bookings">0</div>
+          <div class="lbl">Total Bookings</div>
+        </div>
+        <div class="stat-card">
+          <div class="num cyan" id="stat-routes">0</div>
+          <div class="lbl">Unique Routes</div>
+        </div>
+        <div class="stat-card">
+          <div class="num green" id="stat-revenue">0</div>
+          <div class="lbl">Revenue (PKR)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: ADMIN LOGIN -->
+    <div id="page-admin-login" class="page">
+      <div class="admin-login-wrap">
+        <div class="glass-card">
+          <div class="lock-icon">🔐</div>
+          <h2>Admin Access</h2>
+          <p class="sub">Enter your credentials to access the management dashboard.</p>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="admin-pass-input" placeholder="Enter admin password"
+              onkeydown="if(event.key==='Enter') verifyAdmin()" />
+          </div>
+          <button class="btn btn-primary" onclick="verifyAdmin()">🔓 Unlock Dashboard</button>
+          <button class="btn btn-outline" style="width:100%;margin-top:12px;justify-content:center;"
+            onclick="goHome()">← Back to Home</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE: ADMIN PANEL -->
+    <div id="page-admin" class="page">
+      <div class="panel-header">
+        <div>
+          <h2>🛡️ Admin Dashboard</h2>
+          <p>Manage flights, monitor bookings, and control operations</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="openModal('modal-add-flight')">＋ Add Flight</button>
+          <button class="btn btn-outline" onclick="adminLogout()">Logout</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('admin','flights')" id="admin-tab-flights">✈ Flights <span
+            id="admin-flight-cnt"
+            style="background:rgba(59,130,246,0.2);color:var(--accent1);padding:2px 8px;border-radius:99px;font-size:0.75rem;"></span></button>
+        <button class="tab-btn" onclick="switchTab('admin','bookings')" id="admin-tab-bookings">📋 All Bookings <span
+            id="admin-booking-cnt"
+            style="background:rgba(139,92,246,0.2);color:var(--accent2);padding:2px 8px;border-radius:99px;font-size:0.75rem;"></span></button>
+      </div>
+
+      <div class="tab-content active" id="admin-tab-content-flights">
+        <div class="search-bar">
+          <span class="icon">🔍</span>
+          <input type="text" placeholder="Search flights by ID, route, class..." id="admin-flight-search"
+            oninput="renderAdminFlights()" />
+        </div>
+        <div class="cards-grid" id="admin-flights-grid"></div>
+      </div>
+      <div class="tab-content" id="admin-tab-content-bookings">
+        <div class="search-bar">
+          <span class="icon">🔍</span>
+          <input type="text" placeholder="Search by booking ID, name, CNIC..." id="admin-booking-search"
+            oninput="renderAdminBookings()" />
+        </div>
+        <div class="cards-grid" id="admin-bookings-grid"></div>
+      </div>
+    </div>
+
+    <!-- PAGE: PASSENGER PANEL -->
+    <div id="page-passenger" class="page">
+      <div class="panel-header">
+        <div>
+          <h2>🧳 Passenger Portal</h2>
+          <p>Explore flights and manage your bookings</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-outline" onclick="goHome()">← Back</button>
+        </div>
+      </div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('passenger','flights')" id="passenger-tab-flights">✈ Browse
+          Flights</button>
+        <button class="tab-btn" onclick="switchTab('passenger','mybookings')" id="passenger-tab-mybookings">🎫 My
+          Bookings</button>
+      </div>
+
+      <div class="tab-content active" id="passenger-tab-content-flights">
+        <div class="search-bar">
+          <span class="icon">🔍</span>
+          <input type="text" placeholder="Search by destination, class, price..." id="pax-flight-search"
+            oninput="renderPassengerFlights()" />
+        </div>
+        <div class="cards-grid" id="pax-flights-grid"></div>
+      </div>
+      <div class="tab-content" id="passenger-tab-content-mybookings">
+        <div class="search-bar">
+          <span class="icon">🔍</span>
+          <input type="text" placeholder="Search by name, CNIC, flight ID..." id="pax-booking-search"
+            oninput="renderPassengerBookings()" />
+        </div>
+        <div class="cards-grid" id="pax-bookings-grid"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODALS -->
+
+  <!-- Add Flight Modal -->
+  <div class="modal-overlay" id="modal-add-flight">
+    <div class="modal" style="position:relative">
+      <button class="modal-close" onclick="closeModal('modal-add-flight')">✕</button>
+      <h2>✈ Add New Flight</h2>
+      <p class="sub">Fill in all details to register a new flight in the system.</p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Flight ID</label>
+          <input type="text" id="af-id" placeholder="e.g. PK-201" />
+        </div>
+        <div class="form-group">
+          <label>Departure Time</label>
+          <input type="time" id="af-time" value="08:30" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>From (City)</label>
+          <input type="text" id="af-from" placeholder="e.g. Lahore" list="pak-cities" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label>To (Destination)</label>
+          <input type="text" id="af-to" placeholder="e.g. Karachi" list="pak-cities" autocomplete="off" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Class Type</label>
+          <select id="af-class">
+            <option value="Economy">Economy</option>
+            <option value="Business">Business</option>
+            <option value="First Class">First Class</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Ticket Price (PKR)</label>
+          <input type="number" id="af-price" placeholder="e.g. 15000" min="0" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="addFlight()">✅ Add Flight</button>
+    </div>
+  </div>
+
+  <!-- Edit Flight Modal -->
+  <div class="modal-overlay" id="modal-edit-flight">
+    <div class="modal" style="position:relative">
+      <button class="modal-close" onclick="closeModal('modal-edit-flight')">✕</button>
+      <h2>✏️ Update Flight</h2>
+      <p class="sub">Modify the details of the selected flight.</p>
+      <input type="hidden" id="ef-id-original" />
+      <div class="form-row">
+        <div class="form-group">
+          <label>Flight ID</label>
+          <input type="text" id="ef-id" placeholder="Flight ID" />
+        </div>
+        <div class="form-group">
+          <label>Departure Time</label>
+          <input type="time" id="ef-time" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>From (City)</label>
+          <input type="text" id="ef-from" placeholder="e.g. Lahore" list="pak-cities" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label>To (Destination)</label>
+          <input type="text" id="ef-to" placeholder="e.g. Karachi" list="pak-cities" autocomplete="off" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Class Type</label>
+          <select id="ef-class">
+            <option value="Economy">Economy</option>
+            <option value="Business">Business</option>
+            <option value="First Class">First Class</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Ticket Price (PKR)</label>
+          <input type="number" id="ef-price" placeholder="e.g. 15000" min="0" />
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveFlight()">💾 Save Changes</button>
+    </div>
+  </div>
+
+  <!-- Book Ticket Modal -->
+  <div class="modal-overlay" id="modal-book-ticket">
+    <div class="modal" style="position:relative; max-width:520px;">
+      <button class="modal-close" onclick="closeModal('modal-book-ticket')">✕</button>
+      <h2>🎫 Book Your Ticket</h2>
+      <p class="sub">Complete passenger & payment details to confirm your booking.</p>
+      <input type="hidden" id="bt-flight-id" />
+      <div id="bt-flight-info"
+        style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:10px;padding:14px;margin-bottom:20px;font-size:0.88rem;color:var(--accent1);">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Passenger Name</label>
+          <input type="text" id="bt-name" placeholder="Full name" />
+        </div>
+        <div class="form-group">
+          <label>Age</label>
+          <input type="number" id="bt-age" placeholder="Age" min="1" max="120" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label>CNIC</label>
+        <input type="text" id="bt-cnic" placeholder="e.g. 35202-1234567-8" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Payment Method</label>
+          <select id="bt-payment">
+            <option value="Bank Transfer">Bank Transfer</option>
+            <option value="Digital Wallet">Digital Wallet</option>
+            <option value="JazzCash">JazzCash</option>
+            <option value="EasyPaisa">EasyPaisa</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Transaction ID</label>
+          <input type="text" id="bt-txn" placeholder="TXN123456" />
+        </div>
+      </div>
+      <div
+        style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:10px;padding:12px;margin-bottom:18px;font-size:0.82rem;color:#fcd34d;">
+        💳 Account Number: <strong>123456789</strong> — Transfer payment before submitting.
+      </div>
+      <button class="btn btn-primary" onclick="bookTicket()">🚀 Confirm Booking</button>
+    </div>
+  </div>
+
+  <!-- Pakistani Cities Datalist -->
+  <datalist id="pak-cities">
+    <option value="Karachi"></option>
+    <option value="Lahore"></option>
+    <option value="Islamabad"></option>
+    <option value="Peshawar"></option>
+    <option value="Quetta"></option>
+    <option value="Multan"></option>
+    <option value="Faisalabad"></option>
+    <option value="Sialkot"></option>
+    <option value="Gwadar"></option>
+    <option value="Sukkur"></option>
+    <option value="Bahawalpur"></option>
+    <option value="Turbat"></option>
+    <option value="Skardu"></option>
+    <option value="Chitral"></option>
+    <option value="Dera Ismail Khan"></option>
+  </datalist>
+
+  <!-- Toast Container -->
+  <div id="toast-container"></div>
+
+  <footer>
+    Built with ❤️ by <span>Wajahat147</span> · AeroNex Airline Management System © 2026
+  </footer>
+
+  <script>
+    // ══════════════════════════════════════════
+    //  DATA STORE (mirrors C++ structs)
+    // ══════════════════════════════════════════
+    const ADMIN_PASSWORD = 'w1&a2';
+    const MAX_FLIGHTS = 20;
+    const MAX_BOOKINGS = 50;
+
+    let flights = JSON.parse(localStorage.getItem('aeronex_flights') || '[]');
+    let bookings = JSON.parse(localStorage.getItem('aeronex_bookings') || '[]');
+    let bookingCounter = parseInt(localStorage.getItem('aeronex_bkg_ctr') || '0');
+
+    function saveData() {
+      localStorage.setItem('aeronex_flights', JSON.stringify(flights));
+      localStorage.setItem('aeronex_bookings', JSON.stringify(bookings));
+      localStorage.setItem('aeronex_bkg_ctr', bookingCounter.toString());
+      updateStats();
+    }
+
+    function generateBookingID() {
+      bookingCounter++;
+      return 'BKG' + bookingCounter;
+    }
+
+    // ══════════════════════════════════════════
+    //  NAVIGATION
+    // ══════════════════════════════════════════
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      if (id === 'page-admin') { renderAdminFlights(); renderAdminBookings(); }
+      if (id === 'page-passenger') { renderPassengerFlights(); renderPassengerBookings(); }
+      if (id === 'page-home') updateStats();
+    }
+
+    function goHome() { showPage('page-home'); }
+
+    function showAdminLogin() { showPage('page-admin-login'); setTimeout(() => document.getElementById('admin-pass-input').focus(), 200); }
+
+    function verifyAdmin() {
+      const pass = document.getElementById('admin-pass-input').value;
+      if (pass === ADMIN_PASSWORD) {
+        document.getElementById('admin-pass-input').value = '';
+        toast('Welcome back, Admin! 🛡️', 'success');
+        showPage('page-admin');
+      } else {
+        toast('Incorrect password. Try again.', 'error');
+        document.getElementById('admin-pass-input').select();
+      }
+    }
+
+    function adminLogout() {
+      toast('Logged out successfully.', 'info');
+      goHome();
+    }
+
+    // ══════════════════════════════════════════
+    //  TABS
+    // ══════════════════════════════════════════
+    function switchTab(panel, tab) {
+      const prefix = panel === 'admin' ? 'admin' : 'passenger';
+      document.querySelectorAll(`[id^="${prefix}-tab-"]`).forEach(b => {
+        if (!b.id.includes('content')) b.classList.remove('active');
+      });
+      document.querySelectorAll(`[id^="${prefix}-tab-content-"]`).forEach(c => c.classList.remove('active'));
+      document.getElementById(`${prefix}-tab-${tab}`).classList.add('active');
+      document.getElementById(`${prefix}-tab-content-${tab}`).classList.add('active');
+      if (panel === 'admin' && tab === 'flights') renderAdminFlights();
+      if (panel === 'admin' && tab === 'bookings') renderAdminBookings();
+      if (panel === 'passenger' && tab === 'flights') renderPassengerFlights();
+      if (panel === 'passenger' && tab === 'mybookings') renderPassengerBookings();
+    }
+
+    // ══════════════════════════════════════════
+    //  MODALS
+    // ══════════════════════════════════════════
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+    });
+
+    // ══════════════════════════════════════════
+    //  FLIGHT OPERATIONS (mirrors C++ functions)
+    // ══════════════════════════════════════════
+    function addFlight() {
+      if (flights.length >= MAX_FLIGHTS) { toast('Flight storage full! (Max ' + MAX_FLIGHTS + ')', 'error'); return; }
+      const id = document.getElementById('af-id').value.trim();
+      const time = document.getElementById('af-time').value.trim();
+      const from = document.getElementById('af-from').value.trim();
+      const to = document.getElementById('af-to').value.trim();
+      const cls = document.getElementById('af-class').value;
+      const price = parseInt(document.getElementById('af-price').value);
+
+      if (!id || !time || !from || !to || isNaN(price) || price < 0) {
+        toast('Please fill in all fields correctly.', 'error'); return;
+      }
+      if (flights.find(f => f.flightID === id)) { toast('Flight ID already exists!', 'error'); return; }
+
+      flights.push({ flightID: id, departureTime: time, locationFrom: from, destination: to, classType: cls, ticketPrice: price });
+      saveData();
+      closeModal('modal-add-flight');
+      ['af-id', 'af-time', 'af-from', 'af-to', 'af-price'].forEach(i => document.getElementById(i).value = '');
+      toast('Flight ' + id + ' added successfully! ✈', 'success');
+      renderAdminFlights();
+    }
+
+    function openEditFlight(flightID) {
+      const f = flights.find(f => f.flightID === flightID);
+      if (!f) return;
+      document.getElementById('ef-id-original').value = f.flightID;
+      document.getElementById('ef-id').value = f.flightID;
+      document.getElementById('ef-time').value = f.departureTime;
+      document.getElementById('ef-from').value = f.locationFrom;
+      document.getElementById('ef-to').value = f.destination;
+      document.getElementById('ef-class').value = f.classType;
+      document.getElementById('ef-price').value = f.ticketPrice;
+      openModal('modal-edit-flight');
+    }
+
+    function saveFlight() {
+      const origID = document.getElementById('ef-id-original').value;
+      const idx = flights.findIndex(f => f.flightID === origID);
+      if (idx === -1) { toast('Flight not found!', 'error'); return; }
+
+      const newID = document.getElementById('ef-id').value.trim();
+      const time = document.getElementById('ef-time').value.trim();
+      const from = document.getElementById('ef-from').value.trim();
+      const to = document.getElementById('ef-to').value.trim();
+      const cls = document.getElementById('ef-class').value;
+      const price = parseInt(document.getElementById('ef-price').value);
+
+      if (!newID || !time || !from || !to || isNaN(price) || price < 0) {
+        toast('Please fill in all fields correctly.', 'error'); return;
+      }
+
+      flights[idx] = { flightID: newID, departureTime: time, locationFrom: from, destination: to, classType: cls, ticketPrice: price };
+      // Fix booking references if the Flight ID was changed
+      if (origID !== newID) {
+        bookings.forEach(b => { if (b.flightID === origID) b.flightID = newID; });
+      }
+      saveData();
+      closeModal('modal-edit-flight');
+      toast('Flight updated successfully! 💾', 'success');
+      renderAdminFlights();
+    }
+
+    function deleteFlight(flightID) {
+      const bkgCount = bookings.filter(b => b.flightID === flightID).length;
+      const msg = 'Delete flight ' + flightID + '?' + (bkgCount > 0 ? ' This will also cancel ' + bkgCount + ' booking(s).' : '');
+      if (!confirm(msg)) return;
+      flights = flights.filter(f => f.flightID !== flightID);
+      bookings = bookings.filter(b => b.flightID !== flightID); // cascade
+      saveData();
+      toast('Flight ' + flightID + ' deleted' + (bkgCount > 0 ? ' + ' + bkgCount + ' booking(s) removed.' : '.'), 'info');
+      renderAdminFlights();
+      renderAdminBookings();
+    }
+
+    // ══════════════════════════════════════════
+    //  BOOKING OPERATIONS (mirrors C++ functions)
+    // ══════════════════════════════════════════
+    function openBookTicket(flightID) {
+      const f = flights.find(f => f.flightID === flightID);
+      if (!f) return;
+      document.getElementById('bt-flight-id').value = flightID;
+      document.getElementById('bt-flight-info').innerHTML =
+        `✈ <strong>${f.locationFrom}</strong> → <strong>${f.destination}</strong> &nbsp;|&nbsp; ${f.classType} &nbsp;|&nbsp; ⏰ ${f.departureTime} &nbsp;|&nbsp; 💰 PKR ${f.ticketPrice.toLocaleString()}`;
+      openModal('modal-book-ticket');
+    }
+
+    function bookTicket() {
+      if (bookings.length >= MAX_BOOKINGS) { toast('Booking storage full! (Max ' + MAX_BOOKINGS + ')', 'error'); return; }
+      const flightID = document.getElementById('bt-flight-id').value;
+      const name = document.getElementById('bt-name').value.trim();
+      const age = parseInt(document.getElementById('bt-age').value);
+      const cnic = document.getElementById('bt-cnic').value.trim();
+      const payment = document.getElementById('bt-payment').value;
+      const txn = document.getElementById('bt-txn').value.trim();
+
+      if (!name || isNaN(age) || age <= 0 || age > 120 || !cnic || !txn) {
+        toast('Please fill in all fields correctly.', 'error'); return;
+      }
+      if (!/^\d{5}-\d{7}-\d$/.test(cnic)) {
+        toast('CNIC format must be: XXXXX-XXXXXXX-X  (e.g. 35202-1234567-8)', 'error'); return;
+      }
+
+      const booking = { bookingID: generateBookingID(), passengerName: name, age, cnic, flightID, paymentMethod: payment, transactionID: txn };
+      bookings.push(booking);
+      saveData();
+      closeModal('modal-book-ticket');
+      ['bt-name', 'bt-age', 'bt-cnic', 'bt-txn'].forEach(i => document.getElementById(i).value = '');
+      toast('🎉 Booking confirmed! ID: ' + booking.bookingID, 'success');
+      renderPassengerBookings();
+    }
+
+    function cancelBooking(bookingID) {
+      if (!confirm('Cancel booking ' + bookingID + '? This cannot be undone.')) return;
+      bookings = bookings.filter(b => b.bookingID !== bookingID);
+      saveData();
+      toast('Booking ' + bookingID + ' cancelled.', 'info');
+      renderAdminBookings();
+      renderPassengerBookings();
+    }
+
+    // ══════════════════════════════════════════
+    //  RENDER FUNCTIONS
+    // ══════════════════════════════════════════
+    function cityCode(name) {
+      if (!name) return '???';
+      const codes = {
+        // Pakistani cities
+        karachi: 'KHI', lahore: 'LHE', islamabad: 'ISB', peshawar: 'PEW', quetta: 'UET',
+        multan: 'MUX', faisalabad: 'LYP', sialkot: 'SKT', gwadar: 'GWD', sukkur: 'SKZ',
+        bahawalpur: 'BHV', turbat: 'TUK', skardu: 'KDU', chitral: 'CJL',
+        'dera ismail khan': 'DSK',
+        // International
+        dubai: 'DXB', london: 'LHR', newyork: 'JFK', toronto: 'YYZ',
+        beijing: 'PEK', riyadh: 'RUH', muscat: 'MCT', doha: 'DOH', abudhabi: 'AUH'
+      };
+      return codes[name.toLowerCase()] || name.substring(0, 3).toUpperCase();
+    }
+
+    function classBadge(cls) {
+      const c = cls.toLowerCase();
+      const type = c.includes('business') || c.includes('first') ? 'business' : 'economy';
+      return `<span class="class-badge ${type}">${cls}</span>`;
+    }
+
+    function flightCard(f, mode) {
+      const bkgCount = bookings.filter(b => b.flightID === f.flightID).length;
+      const adminActions = mode === 'admin' ? `
+    <div class="card-actions">
+      <button class="btn btn-success" onclick="openEditFlight('${f.flightID}')">✏️ Edit</button>
+      <button class="btn btn-danger" onclick="deleteFlight('${f.flightID}')">🗑️ Delete</button>
+      <span style="margin-left:auto;font-size:0.78rem;color:var(--text-mid);align-self:center;">${bkgCount} booked</span>
+    </div>` : `
+    <div class="card-actions">
+      <button class="btn btn-primary" style="flex:1;" onclick="openBookTicket('${f.flightID}')">🎫 Book Ticket</button>
+    </div>`;
+
+      return `
+    <div class="flight-card">
+      <div class="flight-route">
+        <div class="route-city">
+          <div class="code">${cityCode(f.locationFrom)}</div>
+          <div class="name">${f.locationFrom}</div>
+        </div>
+        <div class="route-line">
+          <div class="plane">✈</div>
+          <div class="line"></div>
+        </div>
+        <div class="route-city">
+          <div class="code">${cityCode(f.destination)}</div>
+          <div class="name">${f.destination}</div>
+        </div>
+      </div>
+      <div class="flight-meta">
+        <div class="meta-item">
+          <div class="lbl">Flight ID</div>
+          <div class="val">${f.flightID}</div>
+        </div>
+        <div class="meta-item">
+          <div class="lbl">Departure</div>
+          <div class="val">${f.departureTime}</div>
+        </div>
+        <div class="meta-item">
+          <div class="lbl">Class</div>
+          <div class="val">${classBadge(f.classType)}</div>
+        </div>
+        <div class="meta-item">
+          <div class="lbl">Price</div>
+          <div class="val price-tag">PKR ${f.ticketPrice.toLocaleString()}</div>
+        </div>
+      </div>
+      ${adminActions}
+    </div>`;
+    }
+
+    function bookingCard(b, mode) {
+      const f = flights.find(fl => fl.flightID === b.flightID);
+      const routeStr = f ? `${f.locationFrom} → ${f.destination}` : b.flightID;
+      const cancelBtn = `<button class="btn btn-danger" onclick="cancelBooking('${b.bookingID}')">✕ Cancel</button>`;
+      return `
+    <div class="booking-card">
+      <div class="booking-header">
+        <div class="booking-id">📄 ${b.bookingID}</div>
+        ${cancelBtn}
+      </div>
+      <div class="booking-grid">
+        <div class="booking-field"><div class="lbl">Passenger</div><div class="val">${b.passengerName}</div></div>
+        <div class="booking-field"><div class="lbl">Age</div><div class="val">${b.age}</div></div>
+        <div class="booking-field"><div class="lbl">CNIC</div><div class="val">${b.cnic}</div></div>
+        <div class="booking-field"><div class="lbl">Flight</div><div class="val">${b.flightID}</div></div>
+        <div class="booking-field"><div class="lbl">Route</div><div class="val">${routeStr}</div></div>
+        <div class="booking-field"><div class="lbl">Payment</div><div class="val">${b.paymentMethod}</div></div>
+        <div class="booking-field" style="grid-column:1/-1"><div class="lbl">Transaction ID</div><div class="val" style="color:var(--accent3)">${b.transactionID}</div></div>
+      </div>
+    </div>`;
+    }
+
+    function renderAdminFlights() {
+      const q = (document.getElementById('admin-flight-search')?.value || '').toLowerCase();
+      const data = flights.filter(f => !q || [f.flightID, f.locationFrom, f.destination, f.classType].join(' ').toLowerCase().includes(q));
+      const grid = document.getElementById('admin-flights-grid');
+      document.getElementById('admin-flight-cnt').textContent = flights.length;
+      if (!data.length) { grid.innerHTML = emptyState('✈', 'No flights found', q ? 'Try a different search.' : 'Add your first flight using the button above.'); return; }
+      grid.innerHTML = data.map(f => flightCard(f, 'admin')).join('');
+    }
+
+    function renderAdminBookings() {
+      const q = (document.getElementById('admin-booking-search')?.value || '').toLowerCase();
+      const data = bookings.filter(b => !q || [b.bookingID, b.passengerName, b.cnic, b.flightID].join(' ').toLowerCase().includes(q));
+      const grid = document.getElementById('admin-bookings-grid');
+      document.getElementById('admin-booking-cnt').textContent = bookings.length;
+      if (!data.length) { grid.innerHTML = emptyState('📋', 'No bookings yet', q ? 'Try a different search.' : 'Bookings will appear here once passengers book tickets.'); return; }
+      grid.innerHTML = data.map(b => bookingCard(b, 'admin')).join('');
+    }
+
+    function renderPassengerFlights() {
+      const q = (document.getElementById('pax-flight-search')?.value || '').toLowerCase();
+      const data = flights.filter(f => !q || [f.flightID, f.locationFrom, f.destination, f.classType, f.ticketPrice.toString()].join(' ').toLowerCase().includes(q));
+      const grid = document.getElementById('pax-flights-grid');
+      if (!data.length) { grid.innerHTML = emptyState('🔍', 'No flights available', q ? 'Try different search terms.' : 'No flights have been added yet. Please check back later.'); return; }
+      grid.innerHTML = data.map(f => flightCard(f, 'passenger')).join('');
+    }
+
+    function renderPassengerBookings() {
+      const q = (document.getElementById('pax-booking-search')?.value || '').toLowerCase();
+      const data = bookings.filter(b => !q || [b.bookingID, b.passengerName, b.cnic, b.flightID].join(' ').toLowerCase().includes(q));
+      const grid = document.getElementById('pax-bookings-grid');
+      if (!data.length) { grid.innerHTML = emptyState('🎫', 'No bookings found', q ? 'Try a different search.' : "You haven't made any bookings yet. Browse flights to get started!"); return; }
+      grid.innerHTML = data.map(b => bookingCard(b, 'passenger')).join('');
+    }
+
+    function emptyState(icon, title, msg) {
+      return `<div class="empty-state" style="grid-column:1/-1"><div class="icon">${icon}</div><h3>${title}</h3><p>${msg}</p></div>`;
+    }
+
+    // ══════════════════════════════════════════
+    //  STATS
+    // ══════════════════════════════════════════
+    function updateStats() {
+      document.getElementById('stat-flights').textContent = flights.length;
+      document.getElementById('stat-bookings').textContent = bookings.length;
+      const routes = new Set(flights.map(f => f.locationFrom + '-' + f.destination));
+      document.getElementById('stat-routes').textContent = routes.size;
+      const revenue = bookings.reduce((sum, b) => {
+        const f = flights.find(fl => fl.flightID === b.flightID);
+        return sum + (f ? f.ticketPrice : 0);
+      }, 0);
+      document.getElementById('stat-revenue').textContent = revenue.toLocaleString();
+    }
+
+    // ══════════════════════════════════════════
+    //  TOAST
+    // ══════════════════════════════════════════
+    function toast(msg, type = 'info') {
+      const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.innerHTML = `${icons[type]} ${msg}`;
+      document.getElementById('toast-container').appendChild(el);
+      setTimeout(() => el.remove(), 3000);
+    }
+
+    // ══════════════════════════════════════════
+    //  INIT — Seed Pakistani flights on first load
+    // ══════════════════════════════════════════
+    if (flights.length === 0) {
+      flights = [
+        { flightID: 'PK-101', departureTime: '08:30', locationFrom: 'Karachi', destination: 'Lahore', classType: 'Economy', ticketPrice: 15000 },
+        { flightID: 'PK-201', departureTime: '10:00', locationFrom: 'Lahore', destination: 'Islamabad', classType: 'Economy', ticketPrice: 8500 },
+        { flightID: 'PK-301', departureTime: '12:30', locationFrom: 'Islamabad', destination: 'Karachi', classType: 'Business', ticketPrice: 28000 },
+        { flightID: 'PK-401', departureTime: '14:00', locationFrom: 'Karachi', destination: 'Peshawar', classType: 'Economy', ticketPrice: 18000 },
+        { flightID: 'PK-501', departureTime: '17:30', locationFrom: 'Peshawar', destination: 'Quetta', classType: 'Economy', ticketPrice: 12000 },
+        { flightID: 'PK-601', departureTime: '07:00', locationFrom: 'Multan', destination: 'Islamabad', classType: 'Economy', ticketPrice: 9000 },
+        { flightID: 'PK-701', departureTime: '21:30', locationFrom: 'Lahore', destination: 'Karachi', classType: 'Business', ticketPrice: 32000 },
+        { flightID: 'PK-801', departureTime: '11:15', locationFrom: 'Sialkot', destination: 'Karachi', classType: 'Economy', ticketPrice: 16500 },
+        { flightID: 'PK-901', departureTime: '15:45', locationFrom: 'Quetta', destination: 'Lahore', classType: 'Economy', ticketPrice: 14000 },
+        { flightID: 'PA-101', departureTime: '06:00', locationFrom: 'Karachi', destination: 'Islamabad', classType: 'First Class', ticketPrice: 45000 },
+      ];
+      saveData();
+    }
+    updateStats();
+  </script>
+</body>
+
+</html>
